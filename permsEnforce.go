@@ -24,7 +24,7 @@ var log *logging.Logger
 
 func main() {
 	// Load command line arguments
-	configPath := flag.String("config", "", "The location fo config yaml file.")
+	configPath := flag.String("config", "", "The location of config yaml file.")
 	verbose := flag.Bool("v", false, "Output verbose logging")
 	veryVerbose := flag.Bool("vv", false, "Output highly verbose logging")
 	flag.Parse()
