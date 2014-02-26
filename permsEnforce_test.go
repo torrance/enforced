@@ -118,7 +118,11 @@ func TestFolderIsEqual(t *testing.T) {
 }
 
 func TestLoadConfig(t *testing.T) {
-	rootFolder := loadConfig(testFolderList, true)
+	rootFolder, err := loadConfig(testFolderList, true)
+
+	if err != nil {
+		t.Fatal("LoadConfig returned error:", err)
+	}
 	if !rootFolder.isEqual(testFolderConfig) {
 		t.Errorf("Loaded folder config incorrect, got %v", rootFolder)
 	}
