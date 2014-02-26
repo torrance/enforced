@@ -25,6 +25,7 @@ var log *logging.Logger
 func main() {
 	// Load command line arguments
 	configPath := flag.String("config", "", "The location of config yaml file.")
+	dryRun := flag.Bool("dry-run", false, "Don't actually do anything")
 	verbose := flag.Bool("v", false, "Output verbose logging")
 	veryVerbose := flag.Bool("vv", false, "Output highly verbose logging")
 	flag.Parse()
@@ -43,6 +44,10 @@ func main() {
 	}
 
 	log.Info("Config path: %s", *configPath)
+	if dryRun {
+		log.Info("Dry run enabled")
+	}
+
 	folderList, err := loadYAML(*configPath)
 	if err != nil {
 		log.Critical("Failed to load YAML config file: %s", err)
@@ -62,7 +67,7 @@ func main() {
 	}
 
 	ch := make(chan fileDescriptor, 1000)
-	go updateFile(rootFolder, ch)
+	go updateFile(rootFolder, ch, *dryRun)
 
 	// Start watching for file changes
 	// While this means we will redundantly check any files we change
@@ -283,7 +288,7 @@ func getConfig(paths []string, currentFolder *folder, config *folder) {
 	}
 }
 
-func updateFile(rootFolder *folder, ch chan fileDescriptor) {
+func updateFile(rootFolder *folder, ch chan fileDescriptor, dryRun bool) {
 	for f := range ch {
 		log.Debug("Processing file: %s", *f.path)
 
@@ -327,22 +332,28 @@ func updateFile(rootFolder *folder, ch chan fileDescriptor) {
 		// Set permissions for files.
 		if isDir && c.DirMode != 0 && perms != c.DirMode {
 			log.Info("%s Changing permissions to %s\n", *f.path, c.DirMode)
-			if err := os.Chmod(*f.path, c.DirMode); err != nil {
-				log.Error("%s", err)
+			if !dryRun {
+				if err := os.Chmod(*f.path, c.DirMode); err != nil {
+					log.Error("%s", err)
+				}
 			}
 		}
 		// Set permissions for directories.
 		if isRegular && c.FileMode != 0 && perms != c.FileMode {
 			log.Info("%s Changing permissions to %s\n", *f.path, c.FileMode)
-			if err := os.Chmod(*f.path, c.FileMode); err != nil {
-				log.Error("%s", err)
+			if !dryRun {
+				if err := os.Chmod(*f.path, c.FileMode); err != nil {
+					log.Error("%s", err)
+				}
 			}
 		}
 		// Set ownership for files, directories and symlinks.
 		if uid != c.Uid || gid != c.Gid {
 			log.Info("%s Changing ownership to %s (%d) / %s (%d)\n", *f.path, c.User, c.Uid, c.Group, c.Gid)
-			if err := os.Chown(*f.path, c.Uid, c.Gid); err != nil {
-				log.Error("%s", err)
+			if !dryRun {
+				if err := os.Chown(*f.path, c.Uid, c.Gid); err != nil {
+					log.Error("%s", err)
+				}
 			}
 		}
 	}
