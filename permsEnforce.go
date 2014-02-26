@@ -66,7 +66,7 @@ func main() {
 
 	// Start watching for file changes
 	// While this means we will redundantly check any files we change
-	// whilst we walk the full stack, it means we can any files that change during the walk.
+	// whilst we walk the full stack, it means we catch any files that change during the walk.
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
 		log.Critical("Error occurred creating new file watcher: %s", err)
@@ -338,7 +338,7 @@ func updateFile(rootFolder *folder, ch chan fileDescriptor) {
 				log.Error("%s", err)
 			}
 		}
-		// Set ownsership for files, directories and symlinks.
+		// Set ownership for files, directories and symlinks.
 		if uid != c.Uid || gid != c.Gid {
 			log.Info("%s Changing ownership to %s (%d) / %s (%d)\n", *f.path, c.User, c.Uid, c.Group, c.Gid)
 			if err := os.Chown(*f.path, c.Uid, c.Gid); err != nil {
