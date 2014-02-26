@@ -44,7 +44,7 @@ func main() {
 	}
 
 	log.Info("Config path: %s", *configPath)
-	if dryRun {
+	if *dryRun {
 		log.Info("Dry run enabled")
 	}
 
