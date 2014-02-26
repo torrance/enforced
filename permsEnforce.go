@@ -133,7 +133,7 @@ func main() {
 			if ev.IsCreate() && mode.IsDir() {
 				err := watcher.Watch(ev.Name)
 				if err != nil {
-					log.Error("Failed to add new folder to watchlist:", err)
+					log.Error("Failed to add new folder to watchlist: %s", err)
 				} else {
 					log.Debug("Added new directory to watcher: %s", ev.Name)
 				}
