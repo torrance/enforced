@@ -187,7 +187,7 @@ func loadConfig(folderList []*folder, ignoreSystemErrors bool) (rootFolder *fold
 				f.Uid = uid
 			} else if !ignoreSystemErrors {
 				// We failed to get the user id.
-				err = errors.New(fmt.Sprintf("invalid user %s", f.User))
+				err = fmt.Errorf("invalid user %s", f.User)
 				return rootFolder, err
 			}
 		}
@@ -196,7 +196,7 @@ func loadConfig(folderList []*folder, ignoreSystemErrors bool) (rootFolder *fold
 		if f.Group != "" {
 			if f.Gid, err = getGroupId(f.Group); err != nil && !ignoreSystemErrors {
 				// We failed to get the group id
-				err = errors.New(fmt.Sprintf("invalid group: %s.", f.Group))
+				err = fmt.Errorf("invalid group: %s", f.Group)
 				return
 			}
 		}
@@ -207,7 +207,7 @@ func loadConfig(folderList []*folder, ignoreSystemErrors bool) (rootFolder *fold
 			if fileMode, err = strconv.ParseUint(f.FilePerms, 8, 9); err == nil {
 				f.FileMode = os.FileMode(fileMode)
 			} else {
-				err = errors.New(fmt.Sprintf("could not understand file perms: %s", f.FilePerms))
+				err = fmt.Errorf("could not understand file perms: %s", f.FilePerms)
 				return
 			}
 		}
@@ -216,7 +216,7 @@ func loadConfig(folderList []*folder, ignoreSystemErrors bool) (rootFolder *fold
 			if dirMode, err = strconv.ParseUint(f.DirPerms, 8, 9); err == nil {
 				f.DirMode = os.FileMode(dirMode)
 			} else {
-				err = errors.New(fmt.Sprintf("could not understand file perms: %s", f.DirPerms))
+				err = fmt.Errorf("could not understand file perms: %s", f.DirPerms)
 				return
 			}
 		}
