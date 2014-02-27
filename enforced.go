@@ -28,10 +28,23 @@ func main() {
 	dryRun := flag.Bool("dry-run", false, "Don't actually do anything")
 	verbose := flag.Bool("v", false, "Output verbose logging")
 	veryVerbose := flag.Bool("vv", false, "Output highly verbose logging")
+	syslog := flag.Bool("syslog", false, "Output logging to syslog")
 	flag.Parse()
 
 	// Set up logging
-	log = logging.MustGetLogger("permsEnforce")
+	log = logging.MustGetLogger("enforced")
+
+	// Set up syslog backend
+	if *syslog {
+		syslogBackend, err := logging.NewSyslogBackend("enforced")
+		if err != nil {
+			log.Critical("Failed to set up syslog backend: %s", err)
+			return
+		}
+		logging.SetBackend(syslogBackend)
+	}
+
+	// Set up logging
 	switch {
 	case *veryVerbose:
 		logging.SetLevel(logging.DEBUG, "enforced")

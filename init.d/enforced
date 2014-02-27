@@ -12,7 +12,7 @@
 
 PIDFILE=/var/run/enforced.pid
 DAEMON=/usr/local/bin/enforced
-DAEMON_ARGS="-v --dry-run --config /etc/enforced.yml"
+DAEMON_ARGS="-v --syslog --config /etc/enforced.yml"
 
 case $1 in
   start)
