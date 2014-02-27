@@ -34,13 +34,13 @@ func main() {
 	log = logging.MustGetLogger("permsEnforce")
 	switch {
 	case *veryVerbose:
-		logging.SetLevel(logging.DEBUG, "permsEnforce")
+		logging.SetLevel(logging.DEBUG, "enforced")
 		log.Debug("Very verbose logging enabled")
 	case *verbose:
-		logging.SetLevel(logging.INFO, "permsEnforce")
+		logging.SetLevel(logging.INFO, "enforced")
 		log.Info("Verbose logging enabled")
 	default:
-		logging.SetLevel(logging.ERROR, "permsEnforce")
+		logging.SetLevel(logging.ERROR, "enforced")
 	}
 
 	log.Info("Config path: %s", *configPath)
