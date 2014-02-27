@@ -19,7 +19,7 @@ case $1 in
     /sbin/start-stop-daemon --start --background --make-pidfile --pidfile "$PIDFILE" --startas $DAEMON -- $DAEMON_ARGS
     ;;
   stop)
-    /sbin/start-stop-daemon --stop --pidfile $PIDFILE
+    /sbin/start-stop-daemon --stop --pidfile $PIDFILE --retry 1
     ;;
   restart)
     $0 stop
