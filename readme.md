@@ -32,6 +32,7 @@ Usage of enforced:
       -dry-run: Don't actually do anything
       -v: Output verbose logging
       -vv: Output highly verbose logging
+      -syslog: Output logging to syslog
 
 
 
