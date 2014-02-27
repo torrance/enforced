@@ -11,7 +11,7 @@ var testFolderList []*folder = []*folder{
 		DirPerms: "775",
 	},
 	&folder{
-		Path:  "/var/site",
+		Path:  "/var/site/",
 		Group: "www-editors",
 	},
 	&folder{
