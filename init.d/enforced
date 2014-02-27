@@ -1,0 +1,34 @@
+#!/bin/sh
+
+### BEGIN INIT INFO
+# Provides: enforced
+# Required-Start: $local_fs $syslog 
+# Required-Stop: $local_fs $syslog
+# Default-Start: 2 3 4 5
+# Default-Stop: 0 1 6
+# Short-Description: Start enforced to enforce file and folder permsisions.
+# Description: Start enforced to enforce file and folder permsisions.
+### END INIT INFO
+
+PIDFILE=/var/run/enforced.pid
+DAEMON=/usr/local/bin/enforced
+DAEMON_ARGS="-v --dry-run --config /etc/enforced.yml"
+
+case $1 in
+  start)
+    /sbin/start-stop-daemon --start --background --make-pidfile --pidfile "$PIDFILE" --startas $DAEMON -- $DAEMON_ARGS
+    ;;
+  stop)
+    /sbin/start-stop-daemon --stop --pidfile $PIDFILE
+    ;;
+  restart)
+    $0 stop
+    $0 start
+    ;;
+  *)
+    echo "Usage: /etc/init.d/pt-kill {start|stop|restart}" >&2
+    exit 1
+    ;;
+esac
+
+exit 0
