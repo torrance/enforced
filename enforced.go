@@ -181,6 +181,9 @@ func loadConfig(folderList []*folder, ignoreSystemErrors bool) (rootFolder *fold
 			return
 		}
 
+		// Normalise filepaths
+		f.Path = filepath.Clean(f.Path)
+
 		// If user is set, grab system user id
 		if f.User != "" {
 			if uid, err := getUserId(f.User); err == nil {
