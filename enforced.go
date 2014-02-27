@@ -59,6 +59,7 @@ func main() {
 		log.Critical("Failed to process config: %s", err)
 		return
 	}
+	log.Debug("%v", rootFolder)
 
 	baseFolders := getBaseFolders(rootFolder)
 	if len(baseFolders) == 0 {
