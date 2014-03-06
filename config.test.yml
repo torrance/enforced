@@ -1,0 +1,11 @@
+folders:
+  - path: "/var"
+    user: "www-data"
+    dir_perms: "775"
+
+  - path: "/var/site/"
+    group: "www-editors"
+
+  - path: "/lib/folder2"
+    user: "adm"
+    file_perms: "664"

@@ -117,6 +117,22 @@ func TestFolderIsEqual(t *testing.T) {
 	}
 }
 
+func TestLoadYAML(t *testing.T) {
+	folders, err := loadYAML("config.test.yml")
+	if err != nil {
+		t.Fatalf("Failed to load yaml file: %s", err)
+	}
+
+	rootFolder, err := loadConfig(folders, true)
+	if err != nil {
+		t.Fatalf("Failed to load config: %s", err)
+	}
+
+	if !rootFolder.isEqual(testFolderConfig) {
+		t.Errorf("Loaded YAML config incorrect, got: %v expected %v", rootFolder, testFolderConfig)
+	}
+}
+
 func TestLoadConfig(t *testing.T) {
 	rootFolder, err := loadConfig(testFolderList, true)
 
