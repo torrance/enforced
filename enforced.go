@@ -200,13 +200,12 @@ func loadConfig(folderList []*folder, ignoreSystemErrors bool) (rootFolder *fold
 
 		// If user is set, grab system user id
 		if f.User != "" {
-			if uid, err := getUserId(f.User); err == nil {
-				f.Uid = uid
-			} else if !ignoreSystemErrors {
+			if f.Uid, err = getUserId(f.User); err != nil && !ignoreSystemErrors {
 				// We failed to get the user id.
 				err = fmt.Errorf("invalid user %s", f.User)
-				return rootFolder, err
+				return
 			}
+			err = nil // Reset error value if ignoreSystemErrors is true
 		}
 
 		// If the group is set, grab the system group id
@@ -216,6 +215,7 @@ func loadConfig(folderList []*folder, ignoreSystemErrors bool) (rootFolder *fold
 				err = fmt.Errorf("invalid group: %s", f.Group)
 				return
 			}
+			err = nil // Reset error value if ignoreSystemErrors is true
 		}
 
 		// If file or dir perms are set, transform string to integer
