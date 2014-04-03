@@ -12,7 +12,7 @@
 
 PIDFILE=/var/run/enforced.pid
 DAEMON=/usr/local/bin/enforced
-DAEMON_ARGS="-v --syslog --config /etc/enforced.yml"
+DAEMON_ARGS="--syslog --config /etc/enforced.yml"
 
 case $1 in
   start)
@@ -26,7 +26,7 @@ case $1 in
     $0 start
     ;;
   *)
-    echo "Usage: /etc/init.d/pt-kill {start|stop|restart}" >&2
+    echo "Usage: /etc/init.d/enforced {start|stop|restart}" >&2
     exit 1
     ;;
 esac
