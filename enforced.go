@@ -93,15 +93,8 @@ func main() {
 	}
 	// Fsnotify doesn't yet recursively watch. So we have to do this ourselves.
 	for _, baseFolder := range baseFolders {
-		err := filepath.Walk(baseFolder, func(path string, info os.FileInfo, err error) error {
-			if err != nil {
-				return err
-			}
-			if info.IsDir() {
-				err = watcher.Watch(path)
-			}
-			return err
-		})
+		err := recursivelyWatch(baseFolder, watcher)
+
 		if err != nil {
 			log.Critical("Error occurred adding folders to watcher: %s", err)
 			return
@@ -111,15 +104,10 @@ func main() {
 	// Let's make an initial walk across every single file and set it correctly.
 	go func() {
 		for _, baseFolder := range baseFolders {
-			err := filepath.Walk(baseFolder, func(path string, info os.FileInfo, err error) error {
-				if err != nil {
-					return err
-				}
-				ch <- fileDescriptor{&path, &info}
-				return nil
-			})
-			// Stop execution if we can't walk full file tree.
+			err := recursivelyUpdate(baseFolder, ch)
+
 			if err != nil {
+				// Exit if we can't walk full tree
 				log.Critical("Error occurred walking files: %s", err)
 				os.Exit(1)
 			}
@@ -143,18 +131,21 @@ func main() {
 			}
 			mode := fileInfo.Mode()
 
-			// Add new folders to watcher
 			if ev.IsCreate() && mode.IsDir() {
-				err := watcher.Watch(ev.Name)
+				// Add new folders
+				err := recursivelyWatch(ev.Name, watcher)
 				if err != nil {
-					log.Error("Failed to add new folder to watchlist: %s", err)
+					log.Error("Failed to add new directory to watchlist: %s", err)
 				} else {
 					log.Debug("Added new directory to watcher: %s", ev.Name)
 				}
-			}
 
-			// Send on the file to be processed
-			ch <- fileDescriptor{&ev.Name, &fileInfo}
+				// Send on children to be processed
+				recursivelyUpdate(ev.Name, ch)
+			} else {
+				// Send on the file to be processed
+				ch <- fileDescriptor{&ev.Name, &fileInfo}
+			}
 
 		case err := <-watcher.Error:
 			log.Error("Watcher error: %s", err)
@@ -303,6 +294,31 @@ func getConfig(paths []string, currentFolder *folder, config *folder) {
 		// Otherwise this is as far as we can go. We have our config.
 		return
 	}
+}
+
+func recursivelyWatch(folder string, watcher *fsnotify.Watcher) (err error) {
+	err = filepath.Walk(folder, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		if info.IsDir() {
+			err = watcher.Watch(path)
+		}
+		return err
+	})
+
+	return
+}
+
+func recursivelyUpdate(folder string, ch chan fileDescriptor) (err error) {
+	err = filepath.Walk(folder, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		ch <- fileDescriptor{&path, &info}
+		return nil
+	})
+	return
 }
 
 func updateFile(rootFolder *folder, ch chan fileDescriptor, dryRun bool) {
