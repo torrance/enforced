@@ -337,11 +337,12 @@ func updateFile(rootFolder *folder, ch chan fileDescriptor, dryRun bool) {
 		perms := mode.Perm()
 		isDir := mode.IsDir()
 		isRegular := mode.IsRegular()
-		isSymlink := mode&os.ModeSymlink != 0
 
-		// We only know how to handle regular files, directories and symlinks
-		if !(isDir || isRegular || isSymlink) {
-			log.Info("Skipping file: neither regular file, directory or symlink %s", *f.path)
+		// We only know how to handle regular files and directories.
+		// We ignore symlinks as on Linux this changes the ownership of the linked file instead.
+		if !(isDir || isRegular) {
+			log.Info("Skipping file: neither regular file or directory %s", *f.path)
+			continue
 		}
 
 		// Explode path into compononents, and remove first component if it is empty.
@@ -362,7 +363,7 @@ func updateFile(rootFolder *folder, ch chan fileDescriptor, dryRun bool) {
 			c.Gid = gid
 		}
 
-		// Set permissions for files.
+		// Set permissions for directories.
 		if isDir && c.DirMode != 0 && perms != c.DirMode {
 			log.Info("%s Changing permissions to %s\n", *f.path, c.DirMode)
 			if !dryRun {
@@ -371,7 +372,7 @@ func updateFile(rootFolder *folder, ch chan fileDescriptor, dryRun bool) {
 				}
 			}
 		}
-		// Set permissions for directories.
+		// Set permissions for files.
 		if isRegular && c.FileMode != 0 && perms != c.FileMode {
 			log.Info("%s Changing permissions to %s\n", *f.path, c.FileMode)
 			if !dryRun {
@@ -380,7 +381,7 @@ func updateFile(rootFolder *folder, ch chan fileDescriptor, dryRun bool) {
 				}
 			}
 		}
-		// Set ownership for files, directories and symlinks.
+		// Set ownership for files and directories.
 		if uid != c.Uid || gid != c.Gid {
 			log.Info("%s Changing ownership to %s (%d) / %s (%d)\n", *f.path, c.User, c.Uid, c.Group, c.Gid)
 			if !dryRun {
