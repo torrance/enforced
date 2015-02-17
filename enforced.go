@@ -80,6 +80,15 @@ func main() {
 		return
 	}
 
+	// Remove base folders that don't exist or aren't folders
+	tmp := make([]string, 0, len(baseFolders))
+	for _, baseFolder := range baseFolders {
+		if fi, err := os.Stat(baseFolder); err == nil && fi.IsDir() {
+			tmp = append(tmp, baseFolder)
+		}
+	}
+	baseFolders = tmp
+
 	ch := make(chan fileDescriptor, 1000)
 	go updateFile(rootFolder, ch, *dryRun)
 
