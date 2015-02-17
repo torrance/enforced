@@ -85,6 +85,8 @@ func main() {
 	for _, baseFolder := range baseFolders {
 		if fi, err := os.Stat(baseFolder); err == nil && fi.IsDir() {
 			tmp = append(tmp, baseFolder)
+		} else {
+			log.Info("Skipping inaccessible folder: %s", baseFolder)
 		}
 	}
 	baseFolders = tmp
