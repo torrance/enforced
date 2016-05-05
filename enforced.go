@@ -4,15 +4,16 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"github.com/howeyc/fsnotify"
-	logging "github.com/op/go-logging"
-	goyaml "gopkg.in/yaml.v1"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
 	"syscall"
+
+	"github.com/howeyc/fsnotify"
+	logging "github.com/op/go-logging"
+	goyaml "gopkg.in/yaml.v1"
 )
 
 type fileDescriptor struct {
@@ -38,8 +39,8 @@ func main() {
 	if *syslog {
 		syslogBackend, err := logging.NewSyslogBackend("enforced")
 		if err != nil {
-			log.Critical("Failed to set up syslog backend: %s", err)
-			return
+			log.Criticalf("Failed to set up syslog backend: %s", err)
+			os.Exit(1)
 		}
 		logging.SetBackend(syslogBackend)
 	}
@@ -63,21 +64,21 @@ func main() {
 
 	folderList, err := loadYAML(*configPath)
 	if err != nil {
-		log.Critical("Failed to load YAML config file: %s", err)
-		return
+		log.Criticalf("Failed to load YAML config file: %s", err)
+		os.Exit(1)
 	}
 
 	rootFolder, err := loadConfig(folderList, false)
 	if err != nil {
-		log.Critical("Failed to process config: %s", err)
-		return
+		log.Criticalf("Failed to process config: %s", err)
+		os.Exit(1)
 	}
 	log.Debug("%v", rootFolder)
 
 	baseFolders := getBaseFolders(rootFolder)
 	if len(baseFolders) == 0 {
 		log.Critical("No configuration rules found.")
-		return
+		os.Exit(1)
 	}
 
 	// Remove base folders that don't exist or aren't folders
@@ -86,7 +87,7 @@ func main() {
 		if fi, err := os.Stat(baseFolder); err == nil && fi.IsDir() {
 			tmp = append(tmp, baseFolder)
 		} else {
-			log.Error("Skipping inaccessible folder: %s", baseFolder)
+			log.Errorf("Skipping inaccessible folder: %s", baseFolder)
 		}
 	}
 	baseFolders = tmp
@@ -99,16 +100,16 @@ func main() {
 	// whilst we walk the full stack, it means we catch any files that change during the walk.
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
-		log.Critical("Error occurred creating new file watcher: %s", err)
-		return
+		log.Criticalf("Error occurred creating new file watcher: %s", err)
+		os.Exit(1)
 	}
 	// Fsnotify doesn't yet recursively watch. So we have to do this ourselves.
 	for _, baseFolder := range baseFolders {
 		err := recursivelyWatch(baseFolder, watcher)
 
 		if err != nil {
-			log.Critical("Error occurred adding folders to watcher: %s", err)
-			return
+			log.Criticalf("Error occurred adding folders to watcher: %s", err)
+			os.Exit(1)
 		}
 	}
 
@@ -119,7 +120,7 @@ func main() {
 
 			if err != nil {
 				// Exit if we can't walk full tree
-				log.Critical("Error occurred walking files: %s", err)
+				log.Criticalf("Error occurred walking files: %s", err)
 				os.Exit(1)
 			}
 		}
@@ -137,7 +138,7 @@ func main() {
 
 			fileInfo, err := os.Stat(ev.Name)
 			if err != nil {
-				log.Error("Failed to stat changed file: %s", err)
+				log.Errorf("Failed to stat changed file: %s", err)
 				continue
 			}
 			mode := fileInfo.Mode()
@@ -146,9 +147,9 @@ func main() {
 				// Add new folders
 				err := recursivelyWatch(ev.Name, watcher)
 				if err != nil {
-					log.Error("Failed to add new directory to watchlist: %s", err)
+					log.Errorf("Failed to add new directory to watchlist: %s", err)
 				} else {
-					log.Debug("Added new directory to watcher: %s", ev.Name)
+					log.Debugf("Added new directory to watcher: %s", ev.Name)
 				}
 
 				// Send on children to be processed
@@ -159,7 +160,7 @@ func main() {
 			}
 
 		case err := <-watcher.Error:
-			log.Error("Watcher error: %s", err)
+			log.Errorf("Watcher error: %s", err)
 		}
 	}
 }
@@ -301,10 +302,10 @@ func getConfig(paths []string, currentFolder *folder, config *folder) {
 		// Child folder config exists. Recurse.
 		getConfig(paths[1:], nextFolder, config)
 		return
-	} else {
-		// Otherwise this is as far as we can go. We have our config.
-		return
 	}
+
+	// Otherwise this is as far as we can go. We have our config.
+	return
 }
 
 func recursivelyWatch(folder string, watcher *fsnotify.Watcher) (err error) {
@@ -334,12 +335,12 @@ func recursivelyUpdate(folder string, ch chan fileDescriptor) (err error) {
 
 func updateFile(rootFolder *folder, ch chan fileDescriptor, dryRun bool) {
 	for f := range ch {
-		log.Debug("Processing file: %s", *f.path)
+		log.Debugf("Processing file: %s", *f.path)
 
 		// Extract file/folder information
 		sys := (*f.info).Sys()
 		if sys == nil {
-			log.Error("Skipping file: sys interface is nil for %s", *f.path)
+			log.Errorf("Skipping file: sys interface is nil for %s", *f.path)
 			return
 		}
 		uid := int(sys.(*syscall.Stat_t).Uid)
@@ -352,7 +353,7 @@ func updateFile(rootFolder *folder, ch chan fileDescriptor, dryRun bool) {
 		// We only know how to handle regular files and directories.
 		// We ignore symlinks as on Linux this changes the ownership of the linked file instead.
 		if !(isDir || isRegular) {
-			log.Info("Skipping file: neither regular file or directory %s", *f.path)
+			log.Infof("Skipping file: neither regular file or directory %s", *f.path)
 			continue
 		}
 
@@ -376,19 +377,19 @@ func updateFile(rootFolder *folder, ch chan fileDescriptor, dryRun bool) {
 
 		// Set permissions for directories.
 		if isDir && c.DirMode != 0 && perms != c.DirMode {
-			log.Info("%s Changing permissions to %s\n", *f.path, c.DirMode)
+			log.Infof("%s Changing permissions to %s\n", *f.path, c.DirMode)
 			if !dryRun {
 				if err := os.Chmod(*f.path, c.DirMode); err != nil {
-					log.Error("%s", err)
+					log.Errorf("%s", err)
 				}
 			}
 		}
 		// Set permissions for files.
 		if isRegular && c.FileMode != 0 && perms != c.FileMode {
-			log.Info("%s Changing permissions to %s\n", *f.path, c.FileMode)
+			log.Infof("%s Changing permissions to %s\n", *f.path, c.FileMode)
 			if !dryRun {
 				if err := os.Chmod(*f.path, c.FileMode); err != nil {
-					log.Error("%s", err)
+					log.Errorf("%s", err)
 				}
 			}
 		}
@@ -397,7 +398,7 @@ func updateFile(rootFolder *folder, ch chan fileDescriptor, dryRun bool) {
 			log.Info("%s Changing ownership to %s (%d) / %s (%d)\n", *f.path, c.User, c.Uid, c.Group, c.Gid)
 			if !dryRun {
 				if err := os.Chown(*f.path, c.Uid, c.Gid); err != nil {
-					log.Error("%s", err)
+					log.Errorf("%s", err)
 				}
 			}
 		}
