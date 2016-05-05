@@ -25,11 +25,12 @@ var log *logging.Logger
 
 func main() {
 	// Load command line arguments
-	configPath := flag.String("config", "", "The location of config yaml file.")
+	configPath := flag.String("config", "", "The location of config yaml file")
 	dryRun := flag.Bool("dry-run", false, "Don't actually do anything")
 	verbose := flag.Bool("v", false, "Output verbose logging")
 	veryVerbose := flag.Bool("vv", false, "Output highly verbose logging")
 	syslog := flag.Bool("syslog", false, "Output logging to syslog")
+	configCheck := flag.Bool("check", false, "Check config file and exit")
 	flag.Parse()
 
 	// Set up logging
@@ -79,6 +80,10 @@ func main() {
 	if len(baseFolders) == 0 {
 		log.Critical("No configuration rules found.")
 		os.Exit(1)
+	}
+
+	if *configCheck {
+		return
 	}
 
 	// Remove base folders that don't exist or aren't folders
